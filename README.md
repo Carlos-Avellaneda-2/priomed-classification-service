@@ -27,7 +27,7 @@ servicio siempre devuelve `requires_human_review = true`.
 
 ```bash
 pip install -e ".[dev]"
-pytest -q                          # 14 pruebas, incluida cobertura empírica de la garantía NP
+pytest -q                          # 16 pruebas, incluida cobertura empírica de la garantía NP
 python scripts/run_evaluation.py   # comparación de 6 estrategias -> reports/evaluation_report.md
 uvicorn priomed_classification.api:app --reload
 ```

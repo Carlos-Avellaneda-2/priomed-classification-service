@@ -22,3 +22,16 @@ def test_no_alarm_in_benign_referral():
 
 def test_suicidal_ideation_detected():
     assert "ideacion_suicida" in active_alarm_signs("Paciente con pensamientos de muerte")
+
+
+def test_negation_cue_inside_another_word_does_not_hide_alarm():
+    # "sin" dentro de "sintomas" / "sintetico" / "casino" no es una negación.
+    assert "dolor_toracico" in active_alarm_signs("Consulta por síntomas de dolor torácico")
+    assert "dolor_toracico" in active_alarm_signs("Caso sintético: dolor torácico opresivo")
+    assert "sincope" in active_alarm_signs("Estaba en el casino y tuvo un desmayo")
+
+
+def test_whole_word_negation_cues_still_negate():
+    assert not has_active_alarm("Paciente sin dolor toracico")
+    assert not has_active_alarm("No refiere disnea ni desmayo")
+    assert not has_active_alarm("Se descarta sincope")
