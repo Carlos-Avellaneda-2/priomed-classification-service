@@ -47,6 +47,21 @@ defecto los orígenes `http://localhost:5173` y `http://localhost:4173`. Para ot
 PRIOMED_CORS_ORIGINS="https://priomed.example" uvicorn priomed_classification.api:app
 ```
 
+## Verificación del servicio en ejecución
+
+Capturas tomadas el 5 de octubre de 2026 con el servicio corriendo en `localhost:8000`
+(`pytest -q`: 16 pruebas aprobadas). Los casos son sintéticos.
+
+**`POST /classify` desde Swagger UI (`/docs`).** El texto «Consulta por síntomas de dolor torácico»
+activa el guardrail: la palabra «síntomas» ya no se confunde con la negación «sin».
+
+![Swagger UI con la petición y la respuesta 200 de POST /classify](docs/capturas/swagger-classify.png)
+
+**Integración con `priomed-frontend`.** El frontend, servido desde `localhost:4173`, llama a este
+servicio por CORS y muestra su respuesta; la prioridad queda sin confirmar hasta la validación humana.
+
+![Frontend de PrioMed mostrando la clasificación devuelta por este servicio](docs/capturas/integracion-frontend.png)
+
 ## Resultados preliminares (SINTÉTICOS — leer antes de citar)
 
 Corrida por defecto (α = 0.05, δ = 0.05, semilla 7, 3000 remisiones de prueba):
