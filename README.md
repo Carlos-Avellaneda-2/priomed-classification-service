@@ -27,7 +27,7 @@ servicio siempre devuelve `requires_human_review = true`.
 
 ```bash
 pip install -e ".[dev]"
-pytest -q                          # 13 pruebas, incluida cobertura empírica de la garantía NP
+pytest -q                          # 14 pruebas, incluida cobertura empírica de la garantía NP
 python scripts/run_evaluation.py   # comparación de 6 estrategias -> reports/evaluation_report.md
 uvicorn priomed_classification.api:app --reload
 ```
@@ -35,6 +35,16 @@ uvicorn priomed_classification.api:app --reload
 ```bash
 curl -X POST localhost:8000/classify -H 'content-type: application/json' \
   -d '{"referral_id":"r1","text":"Paciente con dolor toracico","structured_urgency":0}'
+```
+
+### CORS
+
+Para que el frontend (`priomed-frontend`) llame la API desde el navegador, el servicio autoriza por
+defecto los orígenes `http://localhost:5173` y `http://localhost:4173`. Para otros orígenes, defina
+`PRIOMED_CORS_ORIGINS` con una lista separada por comas:
+
+```bash
+PRIOMED_CORS_ORIGINS="https://priomed.example" uvicorn priomed_classification.api:app
 ```
 
 ## Resultados preliminares (SINTÉTICOS — leer antes de citar)

@@ -4,9 +4,11 @@ Ejecutar:  uvicorn priomed_classification.api:app --reload
 """
 from __future__ import annotations
 
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from .bootstrap import build_default_pipeline
@@ -21,7 +23,25 @@ async def lifespan(app: FastAPI):
     _state.clear()
 
 
+def allowed_origins() -> list[str]:
+    """Orígenes autorizados a llamar la API desde un navegador (CORS).
+
+    Se leen de PRIOMED_CORS_ORIGINS (lista separada por comas). Por defecto solo el
+    frontend en desarrollo local; nunca se usa el comodín "*".
+    """
+    raw = os.getenv("PRIOMED_CORS_ORIGINS", DEFAULT_CORS_ORIGINS)
+    return [origin.strip() for origin in raw.split(",") if origin.strip()]
+
+
+DEFAULT_CORS_ORIGINS = "http://localhost:5173,http://localhost:4173"
+
 app = FastAPI(title="PrioMed Classification Service", version="0.1.0", lifespan=lifespan)
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=allowed_origins(),
+    allow_methods=["GET", "POST"],
+    allow_headers=["Accept", "Content-Type"],
+)
 
 
 class ClassifyRequest(BaseModel):
