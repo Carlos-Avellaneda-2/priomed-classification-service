@@ -31,3 +31,9 @@ def test_cors_allows_local_frontend_and_rejects_other_origins():
 
         denied = client.options("/classify", headers={"Origin": "http://otro-origen.example", **preflight})
         assert "access-control-allow-origin" not in denied.headers
+
+
+def test_rejects_oversized_text():
+    with TestClient(app) as client:
+        r = client.post("/classify", json={"referral_id": "r3", "text": "tos " * 2000, "structured_urgency": 0})
+        assert r.status_code == 422

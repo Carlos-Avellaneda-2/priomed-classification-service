@@ -45,8 +45,8 @@ app.add_middleware(
 
 
 class ClassifyRequest(BaseModel):
-    referral_id: str
-    text: str = Field(min_length=1, description="Texto libre de la remisión")
+    referral_id: str = Field(min_length=1, max_length=64)
+    text: str = Field(min_length=1, max_length=5000, description="Texto libre de la remisión")
     structured_urgency: int = Field(ge=0, le=2, description="0=baja, 1=media, 2=alta (registrada por el médico)")
 
 
