@@ -125,7 +125,9 @@ def generate(
             parts.append(f"niega {_phrase(rng, neg_reason)}")
         rest = parts[1:]
         rng.shuffle(rest)  # deja el opener primero
-        text = " ".join(p for p in [parts[0], *rest] if p).strip()
+        # Cada fragmento es una cláusula separada por coma, como en una nota clínica real.
+        # (El modelo ML ignora la puntuación; el guardrail la usa para acotar negaciones.)
+        text = f"{parts[0]} " + ", ".join(p for p in rest if p)
 
         # Urgencia estructurada que registra el médico (imprecisa)
         if true_priority == Priority.HIGH:

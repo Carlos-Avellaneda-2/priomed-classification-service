@@ -1,10 +1,16 @@
 """Extracción de señales de alarma por diccionario + reglas (capa 2 del pipeline, Sección 6.2)."""
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 
 from .taxonomy import ALARM_SIGNS
-from .text_utils import is_negated, normalize
+from .text_utils import is_negated, normalize_with_clauses
+
+# Cada frase se busca como palabras completas: "ahogo" no debe coincidir en "desahogo".
+_PHRASE_PATTERNS: dict[str, list[tuple[str, re.Pattern[str]]]] = {
+    sign: [(p, re.compile(r"\b" + re.escape(p) + r"\b")) for p in phrases] for sign, phrases in ALARM_SIGNS.items()
+}
 
 
 @dataclass(frozen=True)
@@ -22,14 +28,12 @@ def extract_alarms(text: str) -> list[AlarmHit]:
     negada y una activa. Se prioriza la sensibilidad: mejor una falsa alarma
     (revisión humana extra) que una señal real omitida.
     """
-    norm = normalize(text)
+    norm = normalize_with_clauses(text)
     hits: list[AlarmHit] = []
-    for sign, phrases in ALARM_SIGNS.items():
-        for phrase in phrases:
-            start = 0
-            while (idx := norm.find(phrase, start)) != -1:
-                hits.append(AlarmHit(sign=sign, phrase=phrase, negated=is_negated(norm, idx)))
-                start = idx + len(phrase)
+    for sign, patterns in _PHRASE_PATTERNS.items():
+        for phrase, pattern in patterns:
+            for m in pattern.finditer(norm):
+                hits.append(AlarmHit(sign=sign, phrase=phrase, negated=is_negated(norm, m.start())))
     return hits
 
 
