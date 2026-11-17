@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from .alarm_extractor import active_alarm_signs
+from .alarm_extractor import AlarmHit, extract_alarms
 from .model import PriorityModel
 from .taxonomy import Priority
 
@@ -19,6 +19,8 @@ class Classification:
     high_score: float
     alarm_signs: list[str] = field(default_factory=list)
     requires_human_review: bool = True
+    # Todas las frases de alarma encontradas, negadas o no (explicación para el revisor).
+    evidence: list[AlarmHit] = field(default_factory=list)
 
 
 class PrioMedPipeline:
@@ -30,9 +32,10 @@ class PrioMedPipeline:
         proba = self.model.predict_proba([text], [structured_urgency])
         score = float(proba[0, int(Priority.HIGH)])
 
-        signs = sorted(active_alarm_signs(text))
+        hits = extract_alarms(text)
+        signs = sorted({h.sign for h in hits if not h.negated})
         if signs:  # capa 3: guardrail, independiente de lo que diga el modelo
-            return Classification(Priority.HIGH, "guardrail", score, signs)
+            return Classification(Priority.HIGH, "guardrail", score, signs, evidence=hits)
 
         pred = int(self.model.decide(proba, self.high_threshold)[0])
-        return Classification(Priority(pred), "ml", score, [])
+        return Classification(Priority(pred), "ml", score, [], evidence=hits)

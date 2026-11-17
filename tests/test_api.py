@@ -37,3 +37,18 @@ def test_rejects_oversized_text():
     with TestClient(app) as client:
         r = client.post("/classify", json={"referral_id": "r3", "text": "tos " * 2000, "structured_urgency": 0})
         assert r.status_code == 422
+
+
+def test_classify_returns_evidence_in_order_and_threshold():
+    with TestClient(app) as client:
+        r = client.post(
+            "/classify",
+            json={"referral_id": "r4", "text": "Niega dolor toracico. Hoy presenta disnea severa", "structured_urgency": 0},
+        )
+        body = r.json()
+        assert body["evidence"] == [
+            {"sign": "dolor_toracico", "phrase": "dolor toracico", "negated": True},
+            {"sign": "dificultad_respiratoria", "phrase": "disnea", "negated": False},
+        ]
+        assert body["alarm_signs"] == ["dificultad_respiratoria"]
+        assert 0 < body["high_threshold"] < 1

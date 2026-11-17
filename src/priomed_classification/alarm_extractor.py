@@ -18,6 +18,7 @@ class AlarmHit:
     sign: str  # nombre canónico, p. ej. "dolor_toracico"
     phrase: str  # frase que coincidió
     negated: bool  # True si se detectó negación previa a ESA ocurrencia
+    start: int = -1  # posición en el texto normalizado (solo para ordenar por aparición)
 
 
 def extract_alarms(text: str) -> list[AlarmHit]:
@@ -33,7 +34,8 @@ def extract_alarms(text: str) -> list[AlarmHit]:
     for sign, patterns in _PHRASE_PATTERNS.items():
         for phrase, pattern in patterns:
             for m in pattern.finditer(norm):
-                hits.append(AlarmHit(sign=sign, phrase=phrase, negated=is_negated(norm, m.start())))
+                hits.append(AlarmHit(sign=sign, phrase=phrase, negated=is_negated(norm, m.start()), start=m.start()))
+    hits.sort(key=lambda h: h.start)
     return hits
 
 

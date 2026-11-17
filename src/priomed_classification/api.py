@@ -50,12 +50,20 @@ class ClassifyRequest(BaseModel):
     structured_urgency: int = Field(ge=0, le=2, description="0=baja, 1=media, 2=alta (registrada por el médico)")
 
 
+class AlarmEvidence(BaseModel):
+    sign: str = Field(description="Señal de alarma canónica, p. ej. dolor_toracico")
+    phrase: str = Field(description="Frase del diccionario que coincidió (normalizada, sin tildes)")
+    negated: bool = Field(description="True si la frase está dentro del alcance de una negación")
+
+
 class ClassifyResponse(BaseModel):
     referral_id: str
     priority: str
     source: str
     high_score: float
+    high_threshold: float | None = Field(description="Umbral Neyman-Pearson sobre P(HIGH) usado por el modelo")
     alarm_signs: list[str]
+    evidence: list[AlarmEvidence] = Field(description="Frases de alarma encontradas, en orden de aparición")
     requires_human_review: bool
 
 
@@ -66,12 +74,16 @@ def health() -> dict:
 
 @app.post("/classify", response_model=ClassifyResponse)
 def classify(req: ClassifyRequest) -> ClassifyResponse:
-    result = _state["pipeline"].classify(req.text, req.structured_urgency)
+    pipeline = _state["pipeline"]
+    result = pipeline.classify(req.text, req.structured_urgency)
+    threshold = pipeline.high_threshold
     return ClassifyResponse(
         referral_id=req.referral_id,
         priority=result.priority.name,
         source=result.source,
         high_score=round(result.high_score, 4),
+        high_threshold=None if threshold is None else round(threshold, 4),
         alarm_signs=result.alarm_signs,
+        evidence=[AlarmEvidence(sign=h.sign, phrase=h.phrase, negated=h.negated) for h in result.evidence],
         requires_human_review=result.requires_human_review,
     )
